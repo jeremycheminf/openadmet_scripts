@@ -1,0 +1,3 @@
+This is a script to test gline and kate-coder-pro in VScode as agents to find the best model for those 2 properties.
+They were guided with info on RDKIT and asked to look for ML available as well as as some extra features it could look at. There was some need to ask more to get some performance on internal test set (recent ocmpounds from training), but results out of the box were good and impressive at it went by itself to read training file, find python libraries, run the code, and give results.
+Better results can be done with extra tuning, datasets, but for a run, go for lunch, back it can give some ideas, and I guess one can ask for plots as well.
