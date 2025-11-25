@@ -3,5 +3,5 @@ They were guided with info on RDKIT and asked to look for ML available as well a
 Better results can be done with extra tuning, datasets, but for a run, go for lunch, back it can give some ideas, and I guess one can ask for plots as well.
 
 Full submissions for other endpoints are
-- LogD: chemprop with external datasets - MPNN_public_oad_model_train.py
-- all others, chemprop with chemeleon single task using all training data and predicting test sets
+- LogD: chemprop with external datasets - MPNN_public_oad_model_train.py; datasets are from https://github.com/myzhengSIMM/RTlogD/tree/main with training (original_data) and test set (chembl32); plus AZ logD data (TDC); and https://github.com/nanxstats/logd74 
+- all others, chemprop with chemeleon single task using all training data and predicting test sets; this code can also be used for HLM Clint and RLM Clint; performances were similar to the agent looking for best models, but it's easier to run chemeleon.
