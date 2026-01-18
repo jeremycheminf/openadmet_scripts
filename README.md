@@ -19,4 +19,4 @@ On the agent for creating scripts, issues that came up quite often were:
 - it can create lots of files with readme, markdown, pictures... even when not asked about it, sometimes good, other time too much
 - - over interpret its own results with R2, or invent results saying "done" and good while the code didn't work, and ends in a loop
 
-The last submission I did was using even more descriptors such as jazzy,  avalon and qm from a chemprop model trained on QM9 data, and the logD model from the logD endpoint. But that was for HLM, MLM, KSol and CACO2 only.
+The last submission I did was using even more descriptors such as jazzy,  avalon and qm from a chemprop model trained on QM9 data, and the logD model from the logD endpoint. But that was for HLM, MLM, KSol and CACO2 only. That was done on the 18th, and I was write this, it's not visible yet.
