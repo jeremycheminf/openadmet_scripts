@@ -1,6 +1,7 @@
 final_corrected_analysis_with_predictions_v2.py is a script to test gline and kate-coder-pro in VScode as agents to find the best model for HLM and RLM properties.
 They were guided with info on RDKIT and asked to look for ML available as well as as some extra features it could look at. There was some need to ask more to get some performance on internal test set (recent compounds from training), but results out of the box were good and impressive at it went by itself to read training files, find python libraries, run the code, and give results.
 Better results can be done with extra tuning, datasets, but for a run, go for lunch, back it can give some ideas, and I guess one can ask for plots as well.
+
 R2 for HLM and MLM were around 0.3 and 0.35, it did better on internal validation than leaderboard and could be from overfitting.
 
 Full submissions for other endpoints are
@@ -8,6 +9,8 @@ Full submissions for other endpoints are
 - all others, chemprop with chemeleon single task using all training data and predicting test sets; this code can also be used for HLM Clint and RLM Clint; performances were similar to the agent looking for best models, but it's easier to run chemeleon.
 
 Tested with little effect, removing first 100/200 compounds by compound ID to see if older compounds had effect on predictions. I didn't check similarity to test set to keep in blinded as it would be in a project.
+
+
 On the agent for creating scripts, issues that came up quite often were:
 - Warning on RDKit and fingerprint generator, not a big problem but the agent reads the entire output, so need to hide them otherwise too many tokens used
 - Chemprop not easy to use and it reverts mostly to v1 even if I tell I have v2
