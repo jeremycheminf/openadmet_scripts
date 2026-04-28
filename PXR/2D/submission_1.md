@@ -1,9 +1,22 @@
 # PXR pEC50 Prediction — Submission 1
-Using Claude for script building
 
 **Date:** 2026-04-28  
-**File:** `results/submission_pEC50.csv` (513 rows, no NaN)  
+**File:** `results/submission_pEC50_1.csv` (513 rows, no NaN)  
 **Prediction range:** 2.898 – 6.018 | mean 4.955 ± 0.552
+
+---
+
+## Hidden Test Set Results
+
+| Metric | Value |
+|--------|-------|
+| **Rank** | **41** |
+| Submitted | 2026-04-28 08:23 UTC |
+| MAE | 0.4955 |
+| RAE | 0.6218 |
+| R² | 0.4656 |
+| Spearman ρ | **0.7896** |
+| Kendall's τ | 0.5894 |
 
 ---
 
@@ -114,3 +127,14 @@ ChemProp_Chemeleon dominates because its graph message-passing captures structur
 - **Mordred 2D** gives small improvement over RDKit 2D alone (~0.001 RMSE), not worth the compute unless using the ensemble
 - **ChemProp+Chemeleon** is the key performance driver in the ensemble — strongly recommended for future iterations
 
+---
+
+## Potential Improvements for Submission 2
+
+- [ ] Hyperparameter optimisation for top GBM models (Optuna/Bayesian, tune on same Butina folds)
+- [ ] More ChemProp epochs (50→100) and/or ensemble of multiple ChemProp seeds
+- [ ] SVM with Tanimoto kernel (non-linear, different inductive bias from trees)
+- [ ] Conformal prediction intervals for uncertainty quantification
+- [ ] Test-time augmentation: SMILES enumeration for ChemProp averaging
+- [ ] Larger ChemProp training with auxiliary PXR data (IC50/Ki from ChEMBL, with uncertainty)
+- [ ] Investigate whether 3D descriptors from docking poses (if receptor structure available) improve predictions
