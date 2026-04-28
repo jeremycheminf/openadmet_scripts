@@ -335,15 +335,14 @@ def main():
           f"mean={final_preds.mean():.3f}  std={final_preds.std():.3f}")
 
     # -- Save ------------------------------------------------------------
-    submission = test_df[["Molecule Name"]].copy()
-    submission["pEC50_pred"] = final_preds
-    for m, preds in test_preds.items():
-        submission[f"pEC50_{m}"] = preds
+    submission = test_df[["SMILES", "Molecule Name"]].copy()
+    submission["pEC50"] = final_preds
 
     out_path = RESULTS_DIR / "submission_pEC50_2.csv"
     submission.to_csv(out_path, index=False)
     print(f"\nSaved: {out_path}  ({len(submission)} rows)")
-    assert submission["pEC50_pred"].isna().sum() == 0
+    assert submission["pEC50"].isna().sum() == 0
+    assert submission.columns.tolist() == ["SMILES", "Molecule Name", "pEC50"]
     print("All checks passed.")
 
 
