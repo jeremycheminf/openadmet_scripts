@@ -1,115 +1,93 @@
-# OpenADMET PXR Structure Baseline Submission Report
+# OpenADMET PXR Structure Corrected Submission Report
 
 ## Objective
 
-This report describes the baseline structure-submission workflow used to prepare a blind-test submission package for the OpenADMET PXR structure task. The report is restricted to the completed baseline submission and is written as a methods/results summary of the submitted baseline only.
+This report documents the corrected full submission package prepared after external blind-test validation identified a subset of failing structures in the original baseline archive. The correction workflow was restricted to the failing compounds and used two targeted remediation strategies: protonation-state repair for chemically invalid cationic states, and GNINA docking fallback for ligands whose UniDock-Pro poses remained highly strained after minimisation.
 
-## Dataset
+## Corrected Submission Package
 
-- Input set: official blinded structure test set
-- Input rows: `184`
-- Input columns: `['structure', 'smiles']`
-- Baseline package exists: `yes`
-- Baseline package PDB count: `184`
-- Baseline package size (bytes): `8349328`
+- corrected archive members: `184`
+- corrected archive size (bytes): `8354265`
+- total blinded ligands in submission: `184`
+- corrected ligands replaced in the full archive: `25`
+- charge-state corrected ligands: `11`
+- GNINA-fallback corrected ligands: `14`
 
-## Receptor Template Panel
+## Root Cause Analysis Of The Failing Subset
 
-Human holo PXR structures were curated into a monomeric receptor panel with associated reference ligands and docking boxes. Exact template-ligand duplicates were retained for curation bookkeeping, but template routing used the deduplicated selected subset.
+Two failure modes were identified among the 25 rejected structures:
 
-Template panel:
-- `1ILH` (PDB `1ILH`, chain `A`, ligand `SRL`, resolution `2.76` A): curated-but-not-used-for-assignment
-- `1M13` (PDB `1M13`, chain `A`, ligand `HYF`, resolution `2.15` A): selected
-- `1NRL` (PDB `1NRL`, chain `A`, ligand `SRL`, resolution `2.0` A): selected
-- `3HVL` (PDB `3HVL`, chain `A`, ligand `SRL`, resolution `2.1` A): curated-but-not-used-for-assignment
-- `3R8D` (PDB `3R8D`, chain `A`, ligand `PNU`, resolution `2.8` A): selected
+1. Chemically invalid protonation states assigned to amide- or lactam-like nitrogens.
+2. Catastrophically strained docked poses from UniDock-Pro hybrid docking, especially for ring-rich ligands.
 
-## Ligand Preparation And Template Assignment
+The first class was corrected by rejecting protonated states on nitrogens directly attached to carbonyl-like or sulfonyl-like groups. The second class was corrected by widening the UniDock-Pro pose harvest, applying explicit MMFF94 strain filtering, and invoking GNINA docking when all UniDock-Pro poses for a ligand-template pair remained above the strain threshold.
 
-Ligands were read from the official blinded structure CSV and normalised into an internal ligand identifier plus SMILES representation using the `structure` identifier column. For 2D inputs, protonation-state preparation was applied before docking at pH 7.4, and the dominant prepared state was used for 3D docking calculations.
+## Protonation-State Corrections
 
-Template assignment used 2D ligand similarity against template co-crystal ligands:
+For the following ligands, the prepared docking state was reverted from an invalid cationic amide/lactam state to the chemically reasonable neutral input state:
 
-- fingerprint: Morgan / ECFP4-like radius 2, 2048 bits
-- similarity metric: Tanimoto
-- top template: always retained
-- second template: retained only when within 0.10 Tanimoto of the best match and chemically non-redundant relative to the first template
+- `x00644-1`
+- `x00773-1`
+- `x02782-1`
+- `x02909-1`
+- `x02914-1`
+- `x03260-1`
+- `x03279-1`
+- `x03331-1`
+- `x03387-1`
+- `x03432-1`
+- `x03463-1`
 
-Assignment summary:
+Charge-state remediation summary:
 
-- completed assignment rows: `368`
-- average templates per ligand: `2.00`
+- corrected ligands with changed prepared state: `11`
+- corrected baseline exports written: `11`
 
-## Docking And Pose Refinement
+## Strain-Driven GNINA Fallback
 
-Each assigned ligand-template pair was processed with the following baseline docking workflow:
+For the remaining neutral failures, UniDock-Pro hybrid docking was retained as the first docking engine, but each ligand-template pose set was screened by MMFF94 strain after GNINA minimisation. When all UniDock-Pro poses remained above the strain threshold, GNINA full docking was run against the same receptor/template, followed by GNINA minimisation and CNN rescoring. The lower-strain engine was then retained for baseline pose selection.
 
-1. UniDock-Pro hybrid docking in `detail` mode
-2. search exhaustiveness: `8`
-3. maximum poses per ligand-template pair: `3`
-4. GNINA pose minimisation with `--minimize`
-5. GNINA CNN rescoring with `--cnn_scoring rescore`
-6. GNINA autoboxing from the template reference ligand
+Neutral ligands corrected by GNINA fallback:
 
-Docking summary:
+- `x01016-1`
+- `x02715-1`
+- `x02776-1`
+- `x02797-1`
+- `x02828-1`
+- `x03037-1`
+- `x03096-1`
+- `x03152-1`
+- `x03223-1`
+- `x03234-1`
+- `x03282-1`
+- `x03319-1`
+- `x03400-1`
+- `x03401-1`
 
-- completed GNINA pose rows: `973`
-- average retained poses per assignment: `2.64`
+GNINA fallback summary:
 
-## Baseline Pose Selection
+- ligands with fallback-selected pose rows: `14`
+- fallback pose rows recorded: `140`
+- corrected neutral baseline exports written: `14`
 
-The blind-test baseline package was generated directly from the GNINA-minimised and CNN-rescored poses. One final complex was selected per ligand using the following ranking rule:
+Example GNINA-fallback selections:
+- `x01016-1` -> template `3R8D`, pose `x01016-1_3R8D_gninafb_pose_003`, CNNaffinity `5.482`, minimizedAffinity `-5.867`
+- `x02715-1` -> template `1M13`, pose `x02715-1_1M13_gninafb_pose_001`, CNNaffinity `6.911`, minimizedAffinity `-7.776`
+- `x02776-1` -> template `1NRL`, pose `x02776-1_1NRL_gninafb_pose_001`, CNNaffinity `6.687`, minimizedAffinity `-9.578`
+- `x02797-1` -> template `1NRL`, pose `x02797-1_1NRL_gninafb_pose_002`, CNNaffinity `7.193`, minimizedAffinity `-8.989`
+- `x02828-1` -> template `1NRL`, pose `x02828-1_1NRL_gninafb_pose_002`, CNNaffinity `6.384`, minimizedAffinity `-9.034`
+- `x03037-1` -> template `1NRL`, pose `x03037-1_1NRL_gninafb_pose_004`, CNNaffinity `6.486`, minimizedAffinity `-8.265`
+- `x03096-1` -> template `1M13`, pose `x03096-1_1M13_gninafb_pose_005`, CNNaffinity `6.910`, minimizedAffinity `-8.416`
+- `x03152-1` -> template `1NRL`, pose `x03152-1_1NRL_gninafb_pose_001`, CNNaffinity `6.213`, minimizedAffinity `-9.506`
 
-1. highest GNINA `CNNaffinity`
-2. tie-break by most favourable GNINA `minimizedAffinity`
-3. tie-break by higher ligand-template similarity
-4. tie-break by lower pose rank
+## Final Selection And Packaging
 
-Each selected ligand pose was merged with the exact monomeric receptor PDB used in docking to produce one protein-ligand PDB per ligand.
+The corrected full archive was assembled by overlaying the 25 corrected ligand-protein PDB files onto the original 184-member baseline archive. All corrected PDBs passed the local structural-format checks used in the workflow before packaging.
 
-Selection summary:
+- replaced PDB entries in the full archive: `25`
+- retained original baseline entries: `159`
+- final corrected archive name: `submission_pdb.zip`
 
-- baseline complexes written: `184`
-- passed basic local PDB validation: `184`
-- mean CNNaffinity: `6.100`
-- median CNNaffinity: `6.132`
-- mean minimizedAffinity: `-7.156`
-- median minimizedAffinity: `-7.309`
+## Practical Interpretation
 
-Template usage in final baseline package:
-- `1NRL`: 99 ligands
-- `1M13`: 54 ligands
-- `3R8D`: 31 ligands
-
-Example selected entries:
-- `x00011-1` -> template `3R8D`, pose `x00011-1_3R8D_pose_001`, CNNaffinity `4.969`, minimizedAffinity `-7.103`
-- `x00035-1` -> template `1NRL`, pose `x00035-1_1NRL_pose_001`, CNNaffinity `5.090`, minimizedAffinity `-6.555`
-- `x00046-1` -> template `1NRL`, pose `x00046-1_1NRL_pose_002`, CNNaffinity `5.525`, minimizedAffinity `-6.025`
-- `x00052-1` -> template `1NRL`, pose `x00052-1_1NRL_pose_002`, CNNaffinity `5.616`, minimizedAffinity `-6.521`
-- `x00086-1` -> template `1NRL`, pose `x00086-1_1NRL_pose_003`, CNNaffinity `5.124`, minimizedAffinity `-6.013`
-- `x00088-1` -> template `3R8D`, pose `x00088-1_3R8D_pose_001`, CNNaffinity `4.910`, minimizedAffinity `-5.802`
-- `x00113-1` -> template `1M13`, pose `x00113-1_1M13_pose_003`, CNNaffinity `6.240`, minimizedAffinity `-6.887`
-- `x00162-1` -> template `1NRL`, pose `x00162-1_1NRL_pose_001`, CNNaffinity `6.082`, minimizedAffinity `-8.495`
-- `x00186-1` -> template `1NRL`, pose `x00186-1_1NRL_pose_003`, CNNaffinity `6.315`, minimizedAffinity `-7.742`
-- `x00229-1` -> template `3R8D`, pose `x00229-1_3R8D_pose_001`, CNNaffinity `5.273`, minimizedAffinity `-7.041`
-- `x00242-1` -> template `1NRL`, pose `x00242-1_1NRL_pose_001`, CNNaffinity `5.058`, minimizedAffinity `-4.105`
-- `x00252-1` -> template `1NRL`, pose `x00252-1_1NRL_pose_002`, CNNaffinity `5.526`, minimizedAffinity `-5.981`
-
-## Validation And Packaging
-
-Baseline exports were subjected to local structural-format validation requiring:
-
-- protein `ATOM` records present
-- ligand `HETATM` records present
-- terminal `END` record present
-
-Validated PDB files were then bundled into the final baseline submission archive:
-
-- archive name: `baseline_submission_pdb.zip`
-- archive members: `184`
-
-## Reproducibility Notes
-
-- the baseline archive contains one monomeric protein-ligand PDB per blinded ligand
-- template selection, docking, and pose ranking were applied consistently across the full blinded set
-- quantitative values in this report were generated directly from the saved baseline workflow outputs
+The corrected archive differs from the original baseline submission only for the 25 compounds that failed external validation. Eleven were repaired by chemistry-aware protonation filtering, and fourteen were repaired by switching from strained UniDock-Pro poses to GNINA-docked alternatives selected after minimisation and strain screening. This corrected full archive is therefore the recommended replacement package for resubmission.
