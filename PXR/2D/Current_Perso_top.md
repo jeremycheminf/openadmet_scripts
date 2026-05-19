@@ -30,7 +30,6 @@ NNLS inner-CV OOF RMSE ≈ 0.472 | Calibration ratio: blind RAE ≈ OOF RMSE × 
 ### Base features
 - `utils.py` — shared helpers: `butina_kfold`, descriptor utils, metrics
 - `03_feature_generation.py` — ECFP4, RDKit2D, Mordred2D → `features/`
-- `22_admet_features.py` — ADMET-AI physicochemical features → `features/admet_ai_*.npy`
 
 ### Encoder pretraining (CheMeleon family)
 - `23_chemeleon_hts_pretrain.py` — binary HTS → `features/chemeleon_hts_*.npy` (needs `cheminf_utils` env + GPU)
