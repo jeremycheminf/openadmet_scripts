@@ -1,7 +1,6 @@
 # PXR 3D Structure Track — Submission v2 Report
 
 **Submitted:** 2026-05-23  
-**Team:** jeremy (REDACTED_AFFILIATION)  
 **File:** `submission_v2_8eqz_best.zip`
 
 ---
