@@ -1,6 +1,4 @@
-# PXR 3D Structure Track — Leaderboard Results
-
-All submissions by jeremy (REDACTED_AFFILIATION).
+# PXR 3D Structure Track — Leaderboard Result
 
 ## Submitted Rounds
 
