@@ -136,8 +136,19 @@ help or because they add complexity/dependencies disproportionate to their benef
 - ChEMBL database (`data/external/cyp_chembl.csv`'s source — a local ChEMBL 37
   SQLite dump, queried directly, not a web API client): Zdrazil et al.,
   *"The ChEMBL Database in 2023,"* Nucleic Acids Research, 2024,
-  doi:10.1093/nar/gkad1004, EMBL-EBI. Molecule standardization via RDKit's
-  `MolStandardize` module (<https://www.rdkit.org>).
+  doi:10.1093/nar/gkad1004, EMBL-EBI.
+- **Capricho** (David Araripe) — the curation logic behind the ChEMBL pull this
+  kit's `cyp_chembl.csv` is derived from follows the same assay-classification and
+  quality-filtering approach as Capricho, a package for flexibly aggregating ChEMBL
+  data into ML-ready datasets under configurable quality filters, itself building on
+  Landrum & Riniker's (2024) curation standards: <https://github.com/David-Araripe/Capricho>
+- **Bart Lenselink & David Araripe (team "shin-chan")** — placed #5 overall and #1
+  among public-data-only teams in the prior OpenADMET ExpansionRx Blind Challenge,
+  using only public data (Capricho-curated ChEMBL among it); their approach directly
+  informed this kit's own bet on population-matched public data (PubChem qHTS) over
+  chasing more model variety:
+  <https://www.youtube.com/watch?v=tZeOPcRse8M> ("Leveraging Public Data in the
+  OpenADMET ExpansionRx Blind Challenge")
 - Monroe (not included in this kit, but informed our "freeze the encoder" approach):
   Banaszewski & Fitzgibbon, arXiv:2608.18982
 - CheMeleon foundation checkpoint: Zenodo record 15460715, arXiv:2506.15792
