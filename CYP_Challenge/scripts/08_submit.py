@@ -26,7 +26,9 @@ them before running, e.g.:
     export CYP_SUBMIT_DISCORD=...
     export CYP_SUBMIT_EMAIL=...
     export CYP_SUBMIT_AFFILIATION=...
-    export CYP_SUBMIT_MODEL_LINK=...   # optional, appended to --model-tag
+    export CYP_SUBMIT_MODEL_LINK=...   # optional; if set, submitted bare as the
+                                        # "Method Report Link" (open_code=True),
+                                        # overriding --model-tag entirely
 
 Then run, e.g.:
     python scripts/08_submit.py --activity results/submission_activity.csv \
@@ -49,15 +51,14 @@ REQUIRED_ENV_VARS = [
 ANON = True
 PAPER = False
 PROPRIETARY_DATA = False
-OPEN_CODE = True  # this kit is meant to be shared publicly
 
 
-def submit(client: Client, csv_path: Path, track: str, model_tag: str) -> str:
+def submit(client: Client, csv_path: Path, track: str, model_tag: str, open_code: bool) -> str:
     status = client.predict(
         os.environ["CYP_SUBMIT_HF_USERNAME"], os.environ["CYP_SUBMIT_ALIAS"], ANON,
         os.environ["CYP_SUBMIT_FULL_NAME"], os.environ["CYP_SUBMIT_DISCORD"],
         os.environ["CYP_SUBMIT_EMAIL"], os.environ["CYP_SUBMIT_AFFILIATION"],
-        model_tag, PAPER, PROPRIETARY_DATA, OPEN_CODE, track,
+        model_tag, PAPER, PROPRIETARY_DATA, open_code, track,
         handle_file(str(csv_path)),
         api_name="/submit_predictions",
     )
@@ -79,14 +80,23 @@ def main() -> None:
     if missing and not args.dry_run:
         parser.error(f"missing required environment variables: {', '.join(missing)} (see this script's docstring)")
 
+    # The CYP Space validates model_tag as a clickable "Method Report Link" when
+    # open_code_checkbox is True -- it must be a bare, fetchable URL, not a
+    # description with a URL appended (confirmed by trial: "description -- URL"
+    # was rejected with "Could not open the Method Report Link"). So: if
+    # CYP_SUBMIT_MODEL_LINK is set, submit it bare with open_code=True and drop
+    # the free-text description; otherwise submit the plain description with
+    # open_code=False.
     model_link = os.environ.get("CYP_SUBMIT_MODEL_LINK", "")
-    model_tag = f"{args.model_tag} — {model_link}" if model_link else args.model_tag
+    open_code = bool(model_link)
+    model_tag = model_link if model_link else args.model_tag
 
     if args.dry_run:
         alias = os.environ.get("CYP_SUBMIT_ALIAS", "<CYP_SUBMIT_ALIAS not set>")
         full_name = os.environ.get("CYP_SUBMIT_FULL_NAME", "<CYP_SUBMIT_FULL_NAME not set>")
         affiliation = os.environ.get("CYP_SUBMIT_AFFILIATION", "<CYP_SUBMIT_AFFILIATION not set>")
-        print(f"[DRY RUN] would submit as {alias} ({full_name}, {affiliation}), tag={model_tag!r}")
+        print(f"[DRY RUN] would submit as {alias} ({full_name}, {affiliation}), "
+              f"tag={model_tag!r}, open_code={open_code}")
         if missing:
             print(f"  (note: {', '.join(missing)} not currently set in the environment)")
         if args.activity:
@@ -97,10 +107,10 @@ def main() -> None:
 
     client = Client("openadmet/cyp-challenge", verbose=False)
     if args.activity:
-        status = submit(client, args.activity, "Regression Prediction", model_tag)
+        status = submit(client, args.activity, "Regression Prediction", model_tag, open_code)
         print(f"Regression: {status}")
     if args.tdi:
-        status = submit(client, args.tdi, "Classification Prediction", model_tag)
+        status = submit(client, args.tdi, "Classification Prediction", model_tag, open_code)
         print(f"Classification: {status}")
 
 
