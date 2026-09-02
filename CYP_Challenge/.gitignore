@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.venv/
+
+data/raw/
+data/interim/
+data/external/pubchem_cyp_qhts_aid1851.csv
+
+results/*
+!results/submission_activity.csv
+!results/submission_tdi.csv
+
+*.pt
+!checkpoints/*.pt

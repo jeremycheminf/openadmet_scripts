@@ -1,0 +1,1 @@
+Vendored from https://github.com/OpenADMET/CYP-Challenge-Tutorial (commit 858ae63, 2026-09-01).

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cyp-submission"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "pandas",
+    "numpy",
+    "scikit-learn",
+    "rdkit",
+    "lightgbm",
+    "huggingface_hub",
+    "requests",
+    "chemprop>=2.1",
+    "lightning",
+    "torch",
+    "tabpfn",
+    "tabicl",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
