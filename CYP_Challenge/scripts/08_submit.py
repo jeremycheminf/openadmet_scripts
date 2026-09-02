@@ -1,7 +1,5 @@
-"""Submit to the OpenADMET CYP Challenge HF Space via its Gradio API -- the same
-mechanism used for the prior OpenADMET PXR challenge (see
-../../PXR/68_auto_submit.py). Confirmed API surface (client.view_api() against
-openadmet/cyp-challenge, 2026-09-03):
+"""Submit to the OpenADMET CYP Challenge HF Space via its Gradio API. Confirmed API
+surface (client.view_api() against openadmet/cyp-challenge, 2026-09-03):
 
     predict(username, user_alias, anon_checkbox, participant_name, discord_username,
             email, affiliation, model_tag, paper_checkbox, proprietary_data_checkbox,
@@ -10,46 +8,55 @@ openadmet/cyp-challenge, 2026-09-03):
 
     track_select: Literal['Regression Prediction', 'Classification Prediction']
 
-Unlike PXR (one track), CYP needs two separate submission calls, one per track.
-Rate limit: as of 2026-09-03, reportedly 24h between submissions (was 4h for PXR --
-verify against the actual "Please wait HH:MM:SS" error message if you hit it).
+CYP needs two separate submission calls, one per track. Rate limit: as of
+2026-09-03, reportedly 24h between submissions -- verify against the actual
+"Please wait HH:MM:SS" error message if you hit it.
 
 gradio_client isn't installable into this project's conda envs -- use a throwaway
-uv venv instead (same trick as scripts/30_fetch_live_leaderboard.py in the main
-research repo):
+uv venv instead:
     wsl -e bash -c "mkdir -p /tmp/gradio_probe && cd /tmp/gradio_probe && \
       /home/jeremy/.local/bin/uv venv --python 3.12 .venv && \
       /home/jeremy/.local/bin/uv pip install --python .venv/bin/python gradio_client"
-    wsl -e bash -c "cd /mnt/c/.../submission_kit && /tmp/gradio_probe/.venv/bin/python \
-      scripts/08_submit.py --activity results/submission_activity.csv \
-      --tdi results/submission_tdi.csv --model-tag 'my model description'"
 
-REVIEW THE IDENTITY FIELDS BELOW before running -- this is a real, visible
-submission (affects the public leaderboard, rate-limited to one per track per day).
+Identity fields are read from environment variables (never hardcoded here) -- set
+them before running, e.g.:
+    export CYP_SUBMIT_HF_USERNAME=...
+    export CYP_SUBMIT_ALIAS=...
+    export CYP_SUBMIT_FULL_NAME=...
+    export CYP_SUBMIT_DISCORD=...
+    export CYP_SUBMIT_EMAIL=...
+    export CYP_SUBMIT_AFFILIATION=...
+    export CYP_SUBMIT_MODEL_LINK=...   # optional, appended to --model-tag
+
+Then run, e.g.:
+    python scripts/08_submit.py --activity results/submission_activity.csv \
+      --tdi results/submission_tdi.csv --model-tag 'my model description'
+
+REVIEW THE IDENTITY FIELDS before running -- this is a real, visible submission
+(affects the public leaderboard, rate-limited to roughly one per track per day).
 """
 
 import argparse
+import os
 from pathlib import Path
 
 from gradio_client import Client, handle_file
 
-# --- Submission identity -- REVIEW before running -----------------------------
-HF_USERNAME = "REDACTED_HF_USERNAME"
-ALIAS = "jeremy"
+REQUIRED_ENV_VARS = [
+    "CYP_SUBMIT_HF_USERNAME", "CYP_SUBMIT_ALIAS", "CYP_SUBMIT_FULL_NAME",
+    "CYP_SUBMIT_DISCORD", "CYP_SUBMIT_EMAIL", "CYP_SUBMIT_AFFILIATION",
+]
 ANON = True
-FULL_NAME = "REDACTED_NAME"
-DISCORD = "jeremycheminf"
-EMAIL = "REDACTED_EMAIL"
-AFFILIATION = "REDACTED_AFFILIATION"
 PAPER = False
 PROPRIETARY_DATA = False
 OPEN_CODE = True  # this kit is meant to be shared publicly
-MODEL_LINK = "https://github.com/jeremycheminf/openadmet_scripts/tree/main/CYP_Challenge"
 
 
 def submit(client: Client, csv_path: Path, track: str, model_tag: str) -> str:
     status = client.predict(
-        HF_USERNAME, ALIAS, ANON, FULL_NAME, DISCORD, EMAIL, AFFILIATION,
+        os.environ["CYP_SUBMIT_HF_USERNAME"], os.environ["CYP_SUBMIT_ALIAS"], ANON,
+        os.environ["CYP_SUBMIT_FULL_NAME"], os.environ["CYP_SUBMIT_DISCORD"],
+        os.environ["CYP_SUBMIT_EMAIL"], os.environ["CYP_SUBMIT_AFFILIATION"],
         model_tag, PAPER, PROPRIETARY_DATA, OPEN_CODE, track,
         handle_file(str(csv_path)),
         api_name="/submit_predictions",
@@ -68,10 +75,20 @@ def main() -> None:
     if not args.activity and not args.tdi:
         parser.error("pass at least one of --activity / --tdi")
 
-    model_tag = f"{args.model_tag} — {MODEL_LINK}" if MODEL_LINK else args.model_tag
+    missing = [v for v in REQUIRED_ENV_VARS if not os.environ.get(v)]
+    if missing and not args.dry_run:
+        parser.error(f"missing required environment variables: {', '.join(missing)} (see this script's docstring)")
+
+    model_link = os.environ.get("CYP_SUBMIT_MODEL_LINK", "")
+    model_tag = f"{args.model_tag} — {model_link}" if model_link else args.model_tag
 
     if args.dry_run:
-        print(f"[DRY RUN] would submit as {ALIAS} ({FULL_NAME}, {AFFILIATION}), tag={model_tag!r}")
+        alias = os.environ.get("CYP_SUBMIT_ALIAS", "<CYP_SUBMIT_ALIAS not set>")
+        full_name = os.environ.get("CYP_SUBMIT_FULL_NAME", "<CYP_SUBMIT_FULL_NAME not set>")
+        affiliation = os.environ.get("CYP_SUBMIT_AFFILIATION", "<CYP_SUBMIT_AFFILIATION not set>")
+        print(f"[DRY RUN] would submit as {alias} ({full_name}, {affiliation}), tag={model_tag!r}")
+        if missing:
+            print(f"  (note: {', '.join(missing)} not currently set in the environment)")
         if args.activity:
             print(f"  Regression Prediction <- {args.activity}")
         if args.tdi:
