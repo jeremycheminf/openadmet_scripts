@@ -10,6 +10,7 @@ dependencies = [
     "pandas",
     "numpy",
     "scikit-learn",
+    "scipy",
     "rdkit",
     "lightgbm",
     "huggingface_hub",

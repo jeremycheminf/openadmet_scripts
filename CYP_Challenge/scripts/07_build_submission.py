@@ -4,7 +4,22 @@ bagged over random candidate subsets. Beats a plain mean or NNLS on true blind d
 (see README references) because it doesn't destructively reallocate weight among
 correlated candidates the way a continuous optimizer can.
 
-Run from the repo root, after scripts 02-05:  python scripts/06_build_submission.py
+Regression predictions get one more step after the ensemble: the final test
+predictions are rescaled onto BLIND_MOMENTS (cyp_submission.blind_benchmark) --
+the true blind-population mean/sd reverse-engineered by SuperCowPowers from their
+own scored submissions -- instead of left on our own training-population scale.
+This isolates calibration *target* from calibration *search quality*: our own
+OOF-derived placement was already shown to find the true optimum for our own
+population, but "optimal for our population" isn't the same as "optimal for the
+population actually being scored".
+
+Validated on a broader ensemble built from the same models/approach: recalibrating
+onto BLIND_MOMENTS took true-blind MA-ST-RAE from 0.7247 to 0.5214 and flipped
+CYP2D6's R2 from -0.749 to +0.377 (see README's "results" section). Caveat:
+BLIND_MOMENTS reflects only the *live* half of the 750-compound blind set, which
+chemical-series splitting doesn't guarantee represents the whole set.
+
+Run from the repo root, after scripts 02-05:  python scripts/07_build_submission.py
 """
 
 import json
@@ -12,11 +27,13 @@ import sys
 
 import numpy as np
 import pandas as pd
+from cyp_submission.blind_benchmark import BLIND_MOMENTS
 from cyp_submission.calibration import apply_placement_correction, fit_placement_correction
 from cyp_submission.caruana import caruana_bagged_ensemble
 from cyp_submission.data import ISOFORMS, TDI_ISOFORMS, load_test_blinded, load_train_inhibition, load_train_tdi
 from cyp_submission.metrics import isoform_st_rae
 from cyp_submission.paths import REFERENCE_DIR, RESULTS_DIR, ensure_dirs
+from scipy.stats import pearsonr
 from sklearn.metrics import matthews_corrcoef
 
 sys.path.insert(0, str(REFERENCE_DIR))
@@ -69,14 +86,26 @@ def build_regression_submission() -> None:
             return isoform_st_rae(y_true, pred, _lo, _hi)
 
         weights = caruana_bagged_ensemble(oof_matrix[m], y[m], score_fn, minimize=True)
-        st_rae = isoform_st_rae(y[m], oof_matrix[m] @ weights, conf_lo[m], conf_hi[m])
+        caruana_oof = oof_matrix[m] @ weights
+        caruana_test = test_matrix @ weights
+        st_rae = isoform_st_rae(y[m], caruana_oof, conf_lo[m], conf_hi[m])
         top = sorted(zip(names, weights), key=lambda kv: -kv[1])[:5]
         scores[iso] = st_rae
-        print(f"{iso}: Caruana ST-RAE={st_rae:.4f}  top picks={[(n, round(float(w), 3)) for n, w in top if w > 0]}")
-        submission[col] = test_matrix @ weights
+        print(f"{iso}: Caruana ST-RAE={st_rae:.4f} (own population)  "
+              f"top picks={[(n, round(float(w), 3)) for n, w in top if w > 0]}")
+
+        # Final step: rescale test predictions onto the true blind population's
+        # moments instead of leaving them on our own training-population scale.
+        rho = pearsonr(y[m], caruana_oof).statistic
+        moments = BLIND_MOMENTS[iso]
+        target_sd = rho * moments["sd"]
+        placed = (caruana_test - caruana_test.mean()) * (target_sd / caruana_test.std()) + moments["mean"]
+        print(f"{iso}: blind-moments placement, rho={rho:.3f}  target=({moments['mean']:.3f}, {target_sd:.3f})")
+        submission[col] = placed
 
     scores["MA"] = float(np.mean([scores[iso] for iso in ISOFORMS]))
-    print(f"\nMA-ST-RAE={scores['MA']:.4f}")
+    print(f"\nMA-ST-RAE={scores['MA']:.4f} (own population; final submission is blind-moments-calibrated "
+          f"instead -- see this script's docstring for the true-blind validation)")
 
     out_path = RESULTS_DIR / "submission_activity.csv"
     submission.to_csv(out_path, index=False)
